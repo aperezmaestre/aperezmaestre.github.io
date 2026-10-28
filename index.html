@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alfonso Pérez Maestre</title>
+<meta name="description" content="Alfonso Pérez Maestre builds AI that runs on hardware you own: local LLMs, self-hosted infrastructure and secure systems.">
+<meta name="author" content="Alfonso Pérez Maestre">
+<meta name="theme-color" content="#03050a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Alfonso Pérez Maestre">
+<meta property="og:description" content="I build AI that runs on hardware you own: local LLMs, self-hosted infrastructure and systems that keep private data private.">
+<noscript><style>.view[hidden] { display: block !important; margin-top: 1.6em; }</style></noscript>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cellipse cx='50' cy='56' rx='46' ry='9' fill='%23f0a24b'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%23f6c27a'/%3E%3Ccircle cx='50' cy='50' r='22' fill='%23000'/%3E%3Cpath d='M8 58 Q50 70 92 58' stroke='%23ffe2b0' stroke-width='5' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root,
+  :root[data-theme="dark"] {
+    --bg: #03050a;
+    --ink: #d1d9de;
+    --dim: #7b8a93;
+    --line: rgba(160, 180, 196, 0.22);
+    --veil: rgba(3, 5, 10, 0.72);
+    color-scheme: dark;
+    --accent: #f2a65a;
+  }
+  :root[data-theme="light"] {
+    --bg: #edeae4;
+    --ink: #15181b;
+    --dim: #5c6268;
+    --line: rgba(40, 50, 60, 0.22);
+    --veil: rgba(237, 234, 228, 0.8);
+    color-scheme: light;
+    --accent: #b4520c;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #space {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+  }
+
+  .panel {
+    position: fixed;
+    left: clamp(20px, 5vw, 88px);
+    bottom: clamp(20px, 7vh, 72px);
+    z-index: 2;
+    width: min(56ch, calc(100vw - 40px));
+    padding: 22px 26px 0 0;
+    border-top: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    text-shadow: 0 0 2px var(--bg), 0 0 10px var(--bg), 0 0 24px var(--bg);
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -40px -60px;
+    z-index: -1;
+    background: radial-gradient(120% 100% at 30% 60%, var(--veil) 55%, transparent 100%);
+    pointer-events: none;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    margin-bottom: 22px;
+  }
+
+  nav a,
+  nav button {
+    font: inherit;
+    color: var(--dim);
+    text-decoration: none;
+    background: none;
+    border: 0;
+    padding: 2px 0;
+    cursor: pointer;
+  }
+
+  nav a:hover,
+  nav button:hover,
+  nav a[aria-current="page"] { color: var(--ink); }
+
+  nav button { margin-left: auto; }
+  nav svg { display: block; width: 15px; height: 15px; }
+
+  main {
+    max-height: calc(100vh - clamp(20px, 7vh, 72px) - 96px);
+    max-height: calc(100svh - clamp(20px, 7vh, 72px) - 96px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .view[hidden] { display: none; }
+  .view p { margin: 0 0 1.1em; }
+  .view p:last-child { margin-bottom: 0; }
+
+  .dim { color: var(--dim); }
+
+  .hello {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 0.45em !important;
+  }
+
+  .view a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--dim);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+
+  .view a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .projects {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .projects .name { font-weight: 600; }
+  .projects .tech { display: block; color: var(--dim); font-size: 0.92em; }
+
+  @media (max-width: 640px) {
+    body { font-size: 13px; }
+    .panel {
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      width: auto;
+      padding: 18px 18px 0 0;
+    }
+    nav { gap: 20px; margin-bottom: 16px; }
+    main {
+      max-height: min(54vh, calc(100vh - 18px - 90px));
+      max-height: min(54svh, calc(100svh - 18px - 90px));
+    }
+  }
+
+  @media (max-height: 640px) and (min-width: 641px) {
+    .panel { bottom: 18px; padding-top: 16px; }
+    nav { margin-bottom: 14px; }
+    .projects { gap: 0.7rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="space" aria-hidden="true"></canvas>
+
+<div class="panel">
+  <nav aria-label="Primary">
+    <a href="#home">home</a>
+    <a href="#projects">projects</a>
+    <a href="#contact">contact</a>
+    <button type="button" id="theme" aria-label="Switch to light theme" title="Switch theme">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor"/></svg>
+    </button>
+  </nav>
+
+  <main>
+    <section class="view" id="view-home">
+      <p class="dim">your data goes in. nothing leaks out.</p>
+      <p class="hello">Hi, I'm Alfonso.</p>
+      <p>
+        I build AI that runs on hardware you own: local LLMs, self-hosted infrastructure and systems that keep private data private.
+        I study Information Systems and spend the rest of my time in Linux, Docker and Rust.
+      </p>
+      <p>
+        Currently building <a href="#projects">AI Brain</a>, a local-first second brain with its own RAG server.
+        Open to internships in AI infrastructure, security and DevOps.
+      </p>
+      <p>
+        <a href="https://github.com/aperezmaestre">github</a> /
+        <a href="https://www.linkedin.com/in/alfonso-perez-maestre/">linkedin</a> /
+        <a href="mailto:alfonso.maestreperez@outlook.es">email</a>
+      </p>
+    </section>
+
+    <section class="view" id="view-projects" hidden>
+      <ul class="projects">
+        <li>
+          <a class="name" href="https://github.com/aperezmaestre/ai-brain-server">ai-brain-server</a>
+          A private AI stack on my own server: local models answer questions over my notes with hybrid search, with automatic ingestion and encrypted backups.
+          <span class="tech">Linux, Docker, Ollama, PostgreSQL/pgvector, Python, n8n</span>
+        </li>
+        <li>
+          <span class="name">AI Brain Desktop</span>
+          A fast Markdown workspace where notes stay on your machine and the AI comes to them. Private while in development.
+          <span class="tech">React, TypeScript, Tauri, Rust</span>
+        </li>
+        <li>
+          <a class="name" href="https://github.com/aperezmaestre/iss-tracker-java">iss-tracker-java</a>
+          Follows the International Space Station live and draws its path across a world map.
+          <span class="tech">Java, Swing, REST APIs</span>
+        </li>
+        <li>
+          <a class="name" href="https://github.com/aperezmaestre/java-employee-sorter">java-employee-sorter</a>
+          Team project that parses employee records from CSV and sorts them by several keys at once.
+          <span class="tech">Java, Collections, CSV</span>
+        </li>
+        <li>
+          <a class="name" href="https://github.com/aperezmaestre/javafx-bouncing-ball">javafx-bouncing-ball</a>
+          A small physics animation with play, pause and speed controls.
+          <span class="tech">JavaFX, Maven</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="view" id="view-contact" hidden>
+      <p class="hello">Let's talk.</p>
+      <p>I'm looking for internships and early-career roles in AI infrastructure, cybersecurity, systems, backend and DevOps. Email is the fastest way to reach me.</p>
+      <p>
+        email: <a href="mailto:alfonso.maestreperez@outlook.es">alfonso.maestreperez@outlook.es</a><br>
+        linkedin: <a href="https://www.linkedin.com/in/alfonso-perez-maestre/">linkedin.com/in/alfonso-perez-maestre</a><br>
+        github: <a href="https://github.com/aperezmaestre">github.com/aperezmaestre</a>
+      </p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const root = document.documentElement;
+  const canvas = document.getElementById('space');
+  const ctx = canvas.getContext('2d');
+  const panel = document.querySelector('.panel');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FONT = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+  const RAMP = ' .,:-=+*#%@';
+  const NR = RAMP.length - 1;
+  const TAU = Math.PI * 2;
+  const TILT = 0.2;
+  const RIN = 1.55;
+  const ROUT = 4.9;
+  const SPOT_RHO = 1.95;
+  const SPOT_W = -1.15;
+
+  const THEMES = {
+    dark: {
+      hole: '#000000',
+      heat: [[92, 26, 14], [150, 48, 20], [208, 92, 38], [240, 146, 70], [255, 200, 138], [255, 238, 214], [255, 252, 244]],
+      star: [[150, 168, 196], [196, 208, 228], [236, 240, 250]],
+      gal: [[140, 160, 230], [214, 170, 230], [240, 200, 160], [170, 210, 230]],
+      comet: [255, 244, 226],
+      cometTail: [255, 150, 70],
+      glow: '255,140,60',
+      glowA: 0.12
+    },
+    light: {
+      hole: '#050505',
+      heat: [[226, 190, 168], [208, 146, 106], [186, 104, 56], [158, 70, 24], [120, 46, 12], [84, 28, 6], [46, 14, 2]],
+      star: [[120, 130, 146], [90, 100, 116], [52, 60, 72]],
+      gal: [[60, 80, 150], [120, 70, 140], [150, 90, 40], [50, 110, 130]],
+      comet: [40, 20, 8],
+      cometTail: [190, 80, 20],
+      glow: '210,120,50',
+      glowA: 0.09
+    }
+  };
+  let T = THEMES.dark;
+  let heatCss = [];
+  let heatOver = [];
+
+  function clamp(x, a, b) { return x < a ? a : (x > b ? b : x); }
+  function smooth(a, b, x) { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+  function mixc(a, b, f) { return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]; }
+  function css(c, a) { return 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (a === undefined ? 1 : clamp(a, 0, 1).toFixed(3)) + ')'; }
+  function rand(seed) { let s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+  function wrapAng(a) { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; }
+
+  function ramp(stops) {
+    const out = [];
+    const m = stops.length - 1;
+    for (let i = 0; i < 24; i++) {
+      const f = (i / 23) * m;
+      const k = Math.min(m - 1, Math.floor(f));
+      out.push(css(mixc(stops[k], stops[k + 1], f - k)));
+    }
+    return out;
+  }
+  function buildColors() {
+    heatCss = ramp(T.heat);
+    heatOver = ramp(THEMES.dark.heat);
+  }
+
+  let vw = 0;
+  let vh = 0;
+  let cx0 = 0;
+  let cy0 = 0;
+  let cx = 0;
+  let cy = 0;
+  let R = 150;
+  let fs = 10;
+  let cw = 6;
+  let ch = 10;
+  let mobile = false;
+
+  let n = 0;
+  let cX;
+  let cY;
+  let cBase;
+  let cTh;
+  let cRho;
+  let cOm;
+  let cFront;
+  let cDisk;
+  let cGeo;
+
+  function diskBase(rho) {
+    const inner = smooth(RIN - 0.08, RIN + 0.3, rho);
+    const outer = 1 - smooth(ROUT - 1.7, ROUT, rho);
+    const hot = Math.pow(clamp((ROUT - rho) / (ROUT - RIN), 0, 1), 1.7);
+    return inner * outer * (0.2 + 1.0 * hot);
+  }
+
+  function buildGrid() {
+    fs = clamp(Math.round(R * 0.068 * 10) / 10, 7.5, 12);
+    cw = fs * 0.6;
+    ch = fs * 1.02;
+    const pad = 24;
+    const x0 = Math.max(-pad, cx0 - (ROUT + 0.3) * R);
+    const x1 = Math.min(vw + pad, cx0 + (ROUT + 0.3) * R);
+    const y0 = Math.max(-pad, cy0 - 1.75 * R);
+    const y1 = Math.min(vh + pad, cy0 + 1.25 * R);
+    const cols = Math.ceil((x1 - x0) / cw);
+    const rows = Math.ceil((y1 - y0) / ch);
+    const X = [];
+    const Y = [];
+    const B = [];
+    const TH = [];
+    const RH = [];
+    const OM = [];
+    const FR = [];
+    const DK = [];
+    const GE = [];
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const px = x0 + i * cw;
+        const py = y0 + j * ch;
+        const dx = (px + cw / 2 - cx0) / R;
+        const dy = (py + ch / 2 - cy0) / R;
+        const r = Math.hypot(dx, dy);
+        const rho = Math.hypot(dx, dy / TILT);
+        let base = 0;
+        let th = 0;
+        let rr = rho;
+        let front = 0;
+        let disk = 0;
+
+        if (dy >= 0 && rho > RIN - 0.1 && rho < ROUT) {
+          const dop = 0.7 + 0.3 * (-dx / rho);
+          base = diskBase(rho) * dop * 1.05;
+          th = Math.atan2(dy / TILT, dx);
+          front = r < 0.985 ? 2 : 1;
+          disk = 1;
+        }
+
+        if (!front && r > 0.985) {
+          let best = 0;
+          if (dy < 0 && rho > RIN - 0.1 && rho < ROUT) {
+            const v = diskBase(rho) * (0.6 + 0.3 * (-dx / rho)) * 0.8;
+            if (v > best) { best = v; th = Math.atan2(dy / TILT, dx); rr = rho; disk = 1; }
+          }
+          const elev = -dy / r;
+          const up = smooth(1.04, 1.09, r) * (1 - smooth(1.22, 1.5, r));
+          if (up > 0) {
+            const w = smooth(-0.15, 0.35, elev);
+            const v = up * w * (1.1 - 0.6 * (r - 1.04) / 0.46) * (0.72 + 0.28 * (-dx / r));
+            if (v > best) { best = v; th = Math.atan2(dy, dx); rr = RIN + (r - 1.04) * 6; disk = 2; }
+          }
+          const lo = smooth(1.02, 1.05, r) * (1 - smooth(1.1, 1.22, r));
+          if (lo > 0 && dy > 0) {
+            const v = lo * smooth(0, 0.6, dy / r) * 0.55;
+            if (v > best) { best = v; th = Math.atan2(dy, dx); rr = RIN; disk = 2; }
+          }
+          const ring = smooth(0.985, 1.005, r) * (1 - smooth(1.035, 1.06, r));
+          if (ring > 0) {
+            const v = ring * (0.85 + 0.25 * (-dx / r));
+            if (v > best) { best = v; th = Math.atan2(dy, dx); rr = 1.3; disk = 3; }
+          }
+          base = best;
+        }
+
+        if (base < 0.035) continue;
+        X.push(px);
+        Y.push(py);
+        B.push(base);
+        TH.push(th);
+        RH.push(rr);
+        OM.push(-0.8 * Math.pow(Math.max(rr, 1.2), -1.5));
+        FR.push(front);
+        DK.push(disk);
+        GE.push(disk === 1 ? rho : r);
+      }
+    }
+    n = X.length;
+    cX = Float32Array.from(X);
+    cY = Float32Array.from(Y);
+    cBase = Float32Array.from(B);
+    cTh = Float32Array.from(TH);
+    cRho = Float32Array.from(RH);
+    cOm = Float32Array.from(OM);
+    cFront = Uint8Array.from(FR);
+    cDisk = Uint8Array.from(DK);
+    cGeo = Float32Array.from(GE);
+  }
+
+  let flash = 0;
+  let ignite = 0;
+
+  function drawCells(front, t) {
+    ctx.font = fs + 'px ' + FONT;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const spot = SPOT_W * t;
+    const ig = ignite;
+    const igOn = ig < 1;
+    let last = -1;
+    let pal = null;
+    for (let k = 0; k < n; k++) {
+      const f = cFront[k];
+      if (front ? f === 0 : f !== 0) continue;
+      const want = f === 2 ? heatOver : heatCss;
+      if (want !== pal) { pal = want; last = -1; }
+      const th = cTh[k] + cOm[k] * t;
+      const rho = cRho[k];
+      const turb = 0.72 + 0.16 * Math.sin(4 * th + 5.5 * rho + 0.35 * Math.sin(t * 0.4 + rho)) + 0.09 * Math.sin(9 * th - 3.1 * rho + 1.3) + 0.03 * Math.sin(17 * th + t * 0.9);
+      let b = cBase[k] * turb;
+      const kind = cDisk[k];
+      if (kind === 1) {
+        const da = wrapAng(cTh[k] - spot);
+        const dr = cGeo[k] - SPOT_RHO;
+        b += 0.75 * Math.exp(-(da * da) / 0.05 - (dr * dr) / 0.05) * cBase[k];
+      } else if (flash > 0.001) {
+        b *= 1 + flash * (kind === 3 ? 1.6 : 0.9);
+      }
+      if (igOn) {
+        const g = kind === 1 ? cGeo[k] : 1.2;
+        b *= clamp((ig * (ROUT + 0.8) - (g - 0.6)) / 0.9, 0, 1);
+      }
+      b = Math.pow(b, 0.8);
+      const idx = Math.floor(clamp(b * 1.45, 0, 1) * NR + 0.5);
+      if (idx < 1) continue;
+      const col = Math.floor(clamp(b * 1.25, 0, 1) * 23);
+      if (col !== last) { ctx.fillStyle = pal[col]; last = col; }
+      ctx.fillText(RAMP.charAt(idx), cX[k], cY[k]);
+    }
+  }
+
+  const layers = [
+    { depth: 0.25, speed: 2.2, font: 9, chars: '..:', alpha: 0.55, density: 1 / 2600 },
+    { depth: 0.55, speed: 5.5, font: 10, chars: '.:*', alpha: 0.75, density: 1 / 7000 },
+    { depth: 1, speed: 11, font: 12, chars: '*+*', alpha: 0.95, density: 1 / 26000 }
+  ];
+  const galaxies = [];
+  const comets = [];
+  let cometTimer = 2.5;
+
+  function makeGalaxy(rnd, x, y, size, type, ci) {
+    const pts = [];
+    if (type === 'spiral' || type === 'barred') {
+      const arms = rnd() < 0.7 ? 2 : 3;
+      const wind = 2.6 + rnd() * 1.6;
+      for (let a = 0; a < arms; a++) {
+        const cnt = Math.round(size * 2.4);
+        for (let i = 0; i < cnt; i++) {
+          const t = Math.pow(rnd(), 0.85);
+          const ang = a * (TAU / arms) + t * wind + (rnd() - 0.5) * 0.5;
+          const rr = (type === 'barred' ? 0.18 + 0.82 * t : t) * size + (rnd() - 0.5) * size * 0.07;
+          pts.push({ a: ang, r: rr, b: 1 - t * 0.85, seed: rnd() * TAU });
+        }
+      }
+      if (type === 'barred') {
+        for (let i = 0; i < size; i++) {
+          const s = (rnd() * 2 - 1) * size * 0.22;
+          pts.push({ a: s >= 0 ? 0 : Math.PI, r: Math.abs(s), b: 0.95, seed: rnd() * TAU });
+        }
+      }
+    } else {
+      const cnt = Math.round(size * 3);
+      for (let i = 0; i < cnt; i++) {
+        const t = Math.pow(rnd(), 1.8);
+        pts.push({ a: rnd() * TAU, r: t * size, b: 1 - t * 0.9, seed: rnd() * TAU });
+      }
+    }
+    const core = Math.round(size * 0.9);
+    for (let i = 0; i < core; i++) pts.push({ a: rnd() * TAU, r: Math.pow(rnd(), 2) * size * 0.16, b: 1, seed: rnd() * TAU });
+    return {
+      x: x, y: y, size: size, pts: pts,
+      tilt: type === 'elliptical' ? 0.55 + rnd() * 0.3 : 0.28 + rnd() * 0.42,
+      rot: rnd() * TAU,
+      pa: (rnd() - 0.5) * 1.2,
+      spin: (rnd() < 0.5 ? 1 : -1) * (0.02 + rnd() * 0.03),
+      col: T.gal[ci % T.gal.length],
+      ci: ci,
+      depth: 0.3 + rnd() * 0.15
+    };
+  }
+
+  function buildSky() {
+    const rnd = rand(11);
+    layers.forEach(function (L) {
+      L.stars = [];
+      const count = Math.round(clamp(vw * vh * L.density, 20, 500));
+      for (let i = 0; i < count; i++) {
+        L.stars.push({ x: rnd() * vw, y: rnd() * vh, k: rnd(), seed: rnd() * TAU, c: Math.floor(rnd() * 3) });
+      }
+    });
+    galaxies.length = 0;
+    const types = ['spiral', 'barred', 'elliptical', 'spiral', 'spiral', 'elliptical', 'barred'];
+    const count = mobile ? 4 : 7;
+    const sizeK = clamp(vw / 1500, 0.65, 1.3);
+    for (let i = 0; i < count; i++) {
+      const big = i === 0;
+      const size = (big ? 95 : 28 + rnd() * 40) * sizeK;
+      galaxies.push(makeGalaxy(rnd, rnd() * (vw + 200) - 100, rnd() * vh, size, types[i % types.length], i));
+    }
+    if (!mobile) { galaxies[0].x = vw * 0.5; galaxies[0].y = vh * 0.14; }
+  }
+
+  const ptr = { x: -9999, y: -9999, tx: -9999, ty: -9999, m: 0, tm: 0, nx: 0, ny: 0 };
+
+  function lens(x, y, out) {
+    let dx = x - cx;
+    let dy = y - cy;
+    let r = Math.hypot(dx, dy) + 0.001;
+    const kH = 0.95 * R;
+    let r2 = r + (kH * kH) / r;
+    x = cx + (dx / r) * r2;
+    y = cy + (dy / r) * r2;
+    if (ptr.m > 0.001) {
+      dx = x - ptr.x;
+      dy = y - ptr.y;
+      r = Math.hypot(dx, dy) + 0.001;
+      const m = 26 * ptr.m;
+      r2 = r + (m * m) / r * Math.exp(-r / 380);
+      x = ptr.x + (dx / r) * r2;
+      y = ptr.y + (dy / r) * r2;
+    }
+    out[0] = x;
+    out[1] = y;
+  }
+
+  const P = [0, 0];
+
+  function behind(x, y) {
+    const dx = (x - cx) / R;
+    const dy = (y - cy) / R;
+    const rho = Math.hypot(dx, dy / 0.34);
+    const r = Math.hypot(dx, dy);
+    if (r < 1.55) return 0.15;
+    return 0.15 + 0.85 * smooth(ROUT * 0.55, ROUT * 1.05, rho);
+  }
+
+  function stepSky(dt) {
+    for (let l = 0; l < layers.length; l++) {
+      const L = layers[l];
+      for (let i = 0; i < L.stars.length; i++) {
+        const s = L.stars[i];
+        s.x -= L.speed * dt;
+        s.y += L.speed * 0.12 * dt;
+        if (s.x < -20) { s.x += vw + 40; s.y = Math.random() * vh; }
+        if (s.y > vh + 20) s.y -= vh + 40;
+      }
+    }
+    for (let g = 0; g < galaxies.length; g++) {
+      const G = galaxies[g];
+      G.x -= 1.4 * dt * (0.6 + G.depth);
+      G.y += 0.15 * dt;
+      if (G.x < -G.size * 1.6) { G.x = vw + G.size * 1.6 + Math.random() * 120; G.y = Math.random() * vh; }
+      if (G.y > vh + G.size * 2) G.y = -G.size * 2;
+    }
+
+    cometTimer -= dt;
+    if (cometTimer <= 0) {
+      spawnComet();
+      cometTimer = 7 + Math.random() * 7;
+    }
+    for (let i = comets.length - 1; i >= 0; i--) {
+      const c = comets[i];
+      const rr = c.r / R;
+      const f = clamp((rr - 1) / 1.1, 0.08, 1);
+      c.r -= 1.15 * R * (0.4 + 0.6 * Math.min(1, rr / 5)) * dt * f;
+      c.th += c.spin * 2.3 * Math.pow(1 / Math.max(rr, 1), 1.5) * dt * f;
+      c.acc += dt;
+      if (c.acc > 0.03) {
+        c.acc = 0;
+        c.trail.push([c.r, c.th]);
+        if (c.trail.length > 46) c.trail.shift();
+      }
+      if (rr < 1.12) c.life -= dt * 1.4;
+      if (c.life <= 0 || c.r < R * 1.02) {
+        flash = Math.min(1, flash + 0.85);
+        comets.splice(i, 1);
+      }
+    }
+    flash *= Math.pow(0.12, dt);
+  }
+
+  function spawnComet() {
+    if (comets.length >= 2) return;
+    const th = Math.PI + (Math.random() - 0.5) * 2.2;
+    comets.push({
+      r: Math.hypot(vw, vh) * 0.75,
+      th: th,
+      spin: Math.random() < 0.5 ? 1 : -1,
+      trail: [],
+      acc: 0,
+      life: 1
+    });
+  }
+
+  function drawSky(t) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const px = ptr.nx;
+    const py = ptr.ny;
+
+    for (let g = 0; g < galaxies.length; g++) {
+      const G = galaxies[g];
+      const rot = G.rot + G.spin * t;
+      const col = T.gal[G.ci % T.gal.length];
+      const ox = G.x - px * 14 * G.depth;
+      const oy = G.y - py * 10 * G.depth;
+      const cpa = Math.cos(G.pa);
+      const spa = Math.sin(G.pa);
+      ctx.font = (G.size > 50 ? 9 : 8) + 'px ' + FONT;
+      for (let i = 0; i < G.pts.length; i++) {
+        const p = G.pts[i];
+        const a = p.a + rot;
+        const lx = Math.cos(a) * p.r;
+        const ly = Math.sin(a) * p.r * G.tilt;
+        lens(ox + lx * cpa - ly * spa, oy + lx * spa + ly * cpa, P);
+        if (P[0] < -20 || P[0] > vw + 20 || P[1] < -20 || P[1] > vh + 20) continue;
+        const b = p.b * (0.78 + 0.22 * Math.sin(p.seed + t * 0.7));
+        ctx.fillStyle = css(col, (0.1 + 0.55 * b) * behind(P[0], P[1]));
+        ctx.fillText(b > 0.85 ? '*' : (b > 0.5 ? ':' : '.'), P[0], P[1]);
+      }
+    }
+
+    for (let l = 0; l < layers.length; l++) {
+      const L = layers[l];
+      ctx.font = L.font + 'px ' + FONT;
+      for (let i = 0; i < L.stars.length; i++) {
+        const s = L.stars[i];
+        lens(s.x - px * 26 * L.depth, s.y - py * 18 * L.depth, P);
+        if (P[0] < -10 || P[0] > vw + 10 || P[1] < -10 || P[1] > vh + 10) continue;
+        const tw = 0.55 + 0.45 * Math.sin(s.seed + t * (0.6 + s.k * 1.4));
+        const a = L.alpha * (0.3 + 0.7 * tw) * (0.4 + 0.6 * s.k) * behind(P[0], P[1]);
+        if (l === 2 && s.k > 0.75) {
+          const gg = ctx.createRadialGradient(P[0], P[1], 0, P[0], P[1], 9);
+          gg.addColorStop(0, css(T.star[2], a * 0.35));
+          gg.addColorStop(1, css(T.star[2], 0));
+          ctx.fillStyle = gg;
+          ctx.fillRect(P[0] - 9, P[1] - 9, 18, 18);
+        }
+        ctx.fillStyle = css(T.star[s.c], a);
+        ctx.fillText(L.chars.charAt(s.k > 0.9 ? 2 : (s.k > 0.55 ? 1 : 0)), P[0], P[1]);
+      }
+    }
+  }
+
+  function drawComets() {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < comets.length; i++) {
+      const c = comets[i];
+      const life = clamp(c.life, 0, 1);
+      const tl = c.trail.length;
+      ctx.font = '10px ' + FONT;
+      for (let k = 0; k < tl; k++) {
+        const p = c.trail[k];
+        const f = (k + 1) / tl;
+        const x = cx + p[0] * Math.cos(p[1]);
+        const y = cy + p[0] * Math.sin(p[1]);
+        ctx.fillStyle = css(mixc(T.cometTail, T.comet, f * f), (0.15 + 0.75 * f * f) * life);
+        ctx.fillText(f > 0.88 ? '#' : (f > 0.7 ? '*' : (f > 0.45 ? '+' : (f > 0.2 ? ':' : '.'))), x, y);
+      }
+      const x = cx + c.r * Math.cos(c.th);
+      const y = cy + c.r * Math.sin(c.th);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
+      g.addColorStop(0, css(T.cometTail, 0.5 * life));
+      g.addColorStop(1, css(T.cometTail, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x - 26, y - 26, 52, 52);
+      ctx.font = '600 15px ' + FONT;
+      ctx.fillStyle = css(T.comet, life);
+      ctx.fillText('@', x, y);
+    }
+  }
+
+  function layout() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    vw = window.innerWidth;
+    vh = window.innerHeight;
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mobile = vw < 700;
+    if (mobile) {
+      const top = panel.getBoundingClientRect().top;
+      R = clamp(vw * 0.24, 66, 115);
+      cx0 = vw - R * 0.75;
+      cy0 = clamp(top * 0.55, 1.9 * R, top - 1.3 * R);
+      if (!(cy0 > 0)) cy0 = vh * 0.25;
+    } else {
+      R = clamp(Math.min(vw * 0.14, vh * 0.27), 90, 300);
+      cx0 = vw - R * 1.1;
+      cy0 = clamp(vh * 0.47, 1.75 * R + 24, vh - 1.3 * R);
+    }
+    cx = cx0;
+    cy = cy0;
+    buildGrid();
+    buildSky();
+  }
+
+  function draw(t) {
+    ctx.setTransform(canvas.width / vw, 0, 0, canvas.height / vh, 0, 0);
+    ctx.clearRect(0, 0, vw, vh);
+    const hx = -ptr.nx * 8;
+    const hy = -ptr.ny * 6;
+    cx = cx0 + hx;
+    cy = cy0 + hy;
+
+    drawSky(t);
+
+    const gr = R * (3.8 + flash * 0.6);
+    const g = ctx.createRadialGradient(cx, cy, R, cx, cy, gr);
+    g.addColorStop(0, 'rgba(' + T.glow + ',' + (T.glowA * (1 + flash * 1.4) * Math.min(1, ignite * 1.5)).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(' + T.glow + ',0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - gr, cy - gr, gr * 2, gr * 2);
+
+    ctx.save();
+    ctx.translate(hx, hy);
+    drawCells(0, t);
+    ctx.restore();
+
+    drawComets();
+
+    ctx.fillStyle = T.hole;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.985, 0, TAU);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(hx, hy);
+    drawCells(1, t);
+    ctx.restore();
+  }
+
+  let clock = 0;
+  let last = 0;
+  function frame(ts) {
+    const dt = Math.min(0.05, (ts - last) / 1000 || 0.016);
+    last = ts;
+    clock += dt;
+    ignite = Math.min(1, ignite + dt / 2.4);
+    const k = 1 - Math.pow(0.0015, dt);
+    if (ptr.x < -9000) { ptr.x = ptr.tx; ptr.y = ptr.ty; }
+    ptr.x += (ptr.tx - ptr.x) * k;
+    ptr.y += (ptr.ty - ptr.y) * k;
+    ptr.m += (ptr.tm - ptr.m) * (1 - Math.pow(0.02, dt));
+    const tnx = ptr.tm > 0 ? clamp(ptr.tx / vw * 2 - 1, -1, 1) : 0;
+    const tny = ptr.tm > 0 ? clamp(ptr.ty / vh * 2 - 1, -1, 1) : 0;
+    const kp = 1 - Math.pow(0.08, dt);
+    ptr.nx += (tnx - ptr.nx) * kp;
+    ptr.ny += (tny - ptr.ny) * kp;
+    stepSky(dt);
+    draw(clock);
+    requestAnimationFrame(frame);
+  }
+
+  buildColors();
+  layout();
+
+  if (reduced) {
+    ignite = 1;
+    draw(4);
+    window.addEventListener('resize', function () { layout(); draw(4); });
+  } else {
+    window.addEventListener('resize', layout);
+    window.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'touch') return;
+      ptr.tx = e.clientX;
+      ptr.ty = e.clientY;
+      ptr.tm = 1;
+    });
+    document.addEventListener('mouseout', function (e) { if (!e.relatedTarget) ptr.tm = 0; });
+    window.addEventListener('blur', function () { ptr.tm = 0; });
+    last = performance.now();
+    requestAnimationFrame(frame);
+  }
+
+  const themeBtn = document.getElementById('theme');
+  function applyTheme(name) {
+    root.setAttribute('data-theme', name);
+    T = THEMES[name];
+    buildColors();
+    themeBtn.setAttribute('aria-label', name === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    if (reduced) draw(4);
+  }
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (e) { saved = null; }
+  if (saved === 'light' || saved === 'dark') applyTheme(saved);
+  themeBtn.addEventListener('click', function () {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
+
+  const names = ['home', 'projects', 'contact'];
+  const links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  function route() {
+    let v = location.hash.replace('#', '');
+    if (names.indexOf(v) < 0) v = 'home';
+    names.forEach(function (nm) { document.getElementById('view-' + nm).hidden = nm !== v; });
+    links.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + v) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', function () { route(); if (mobile) layout(); if (reduced) draw(4); });
+  route();
+  layout();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { layout(); if (reduced) draw(4); });
+})();
+</script>
+</body>
+</html>
